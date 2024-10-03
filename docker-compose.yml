@@ -124,7 +124,7 @@ services:
   watch:
     container_name: watch
     build: watch
-    user: "1000:1001"
+    user: "${USER_ID}:${GROUP_ID}"
     ports:
     - "0.0.0.0:11180:80"
     volumes:
@@ -144,7 +144,7 @@ services:
   caddy:
     container_name: caddy
     build: caddy
-    user: "1000:1001"
+    user: "${USER_ID}:${GROUP_ID}"
     ports:
     - "80:80"
     - "443:443"
