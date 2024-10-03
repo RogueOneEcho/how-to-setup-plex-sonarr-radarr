@@ -1,0 +1,56 @@
+{
+  admin off
+  acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  email {env.TLS_EMAIL}
+}
+
+{$PLEX_HOST} {
+  reverse_proxy plex:32400
+}
+
+{$JELLYFIN_HOST} {
+  reverse_proxy jellyfin:8096
+}
+
+{$SONARR_HOST} {
+  reverse_proxy sonarr:8989
+}
+
+{$RADARR_HOST} {
+  reverse_proxy radarr:7878
+}
+
+{$LIDARR_HOST} {
+  reverse_proxy lidarr:8686
+}
+
+{$READARR_HOST} {
+  reverse_proxy readarr:8787
+}
+
+{$LISTENARR_HOST} {
+  reverse_proxy listenarr:8787
+}
+
+{$WATCH_HOST} {
+  reverse_proxy watch:80
+}
+
+:80, :443 {
+  templates
+  header Content-Type text/plain
+  respond /healthcheck 200 {
+    body <<EOF
+    Hello {{.RemoteIP}},
+    Everything is fine.
+    EOF
+    close
+  }
+  respond 421 {
+    body <<EOF
+    Hello {{.RemoteIP}},
+    Unfortunately we couldn't find a match for {{.Host}}.
+    EOF
+    close
+  }
+}

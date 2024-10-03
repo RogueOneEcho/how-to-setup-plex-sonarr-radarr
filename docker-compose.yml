@@ -1,0 +1,194 @@
+services:
+
+  preflight:
+    container_name: preflight
+    build:
+      context: preflight
+      additional_contexts:
+        shared: shared
+    volumes:
+    - /srv/shared:/srv/shared
+    env_file:
+    - preflight/.env
+
+  plex:
+    container_name: plex
+    image: lscr.io/linuxserver/plex
+    ports:
+    - "0.0.0.0:32400:32400"
+    volumes:
+    - /srv/plex:/config
+    - /srv/shared:/srv/shared
+    - /media:/media
+    env_file:
+    - shared/.env
+    - plex/.env
+    depends_on:
+      preflight:
+        condition: service_completed_successfully
+    healthcheck:
+      test: curl -s -o /dev/null -w '%{http_code}' http://localhost:32400 | grep -q 401
+    restart: unless-stopped
+
+  jellyfin:
+    container_name: jellyfin
+    image: lscr.io/linuxserver/jellyfin
+    profiles:
+    - jellyfin
+    ports:
+    - "0.0.0.0:8096:8096"
+    volumes:
+    - /srv/jellyfin:/config
+    - /srv/shared:/srv/shared
+    - /media:/media
+    env_file:
+    - shared/.env
+    depends_on:
+      preflight:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  sonarr:
+    container_name: sonarr
+    image: lscr.io/linuxserver/sonarr
+    volumes:
+    - /srv/sonarr:/config
+    - /srv/shared:/srv/shared
+    - /media:/media
+    env_file:
+    - shared/.env
+    depends_on:
+      preflight:
+        condition: service_completed_successfully
+    healthcheck:
+      test: curl --fail http://localhost:8989 || exit 1
+    restart: unless-stopped
+
+  radarr:
+    container_name: radarr
+    image: lscr.io/linuxserver/radarr
+    volumes:
+    - /srv/radarr:/config
+    - /srv/shared:/srv/shared
+    - /media:/media
+    env_file:
+    - shared/.env
+    depends_on:
+      preflight:
+        condition: service_completed_successfully
+    healthcheck:
+      test: curl --fail http://localhost:7878 || exit 1
+    restart: unless-stopped
+
+  lidarr:
+    container_name: lidarr
+    image: lscr.io/linuxserver/lidarr
+    volumes:
+    - /srv/lidarr:/config
+    - /srv/shared:/srv/shared
+    - /media:/media
+    env_file:
+    - shared/.env
+    depends_on:
+      preflight:
+        condition: service_completed_successfully
+    healthcheck:
+      test: curl --fail http://localhost:8686 || exit 1
+    restart: unless-stopped
+
+  readarr:
+    container_name: readarr
+    image: lscr.io/linuxserver/readarr:develop
+    volumes:
+    - /srv/readarr:/config
+    - /srv/shared:/srv/shared
+    - /media:/media
+    env_file:
+    - shared/.env
+    depends_on:
+      preflight:
+        condition: service_completed_successfully
+    healthcheck:
+      test: curl --fail http://localhost:8787 || exit 1
+    restart: unless-stopped
+
+  listenarr:
+    container_name: listenarr
+    image: lscr.io/linuxserver/readarr:develop
+    volumes:
+    - /srv/listenarr:/config
+    - /srv/shared:/srv/shared
+    - /media:/media
+    env_file:
+    - shared/.env
+    depends_on:
+      preflight:
+        condition: service_completed_successfully
+    healthcheck:
+      test: curl --fail http://localhost:8787 || exit 1
+    restart: unless-stopped
+
+  watch:
+    container_name: watch
+    build: watch
+    user: "1000:1001"
+    ports:
+    - "0.0.0.0:11180:80"
+    volumes:
+    - /srv/watch/data:/data/caddy
+    - /srv/watch/config:/config/caddy
+    - /srv/shared/sonarr:/srv/shared/sonarr:ro
+    - /srv/shared/radarr:/srv/shared/radarr:ro
+    env_file:
+    - watch/.env
+    depends_on:
+      preflight:
+        condition: service_completed_successfully
+    healthcheck:
+      test: curl --fail http://localhost/healthcheck || exit 1
+    restart: unless-stopped
+
+  caddy:
+    container_name: caddy
+    build: caddy
+    user: "1000:1001"
+    ports:
+    - "80:80"
+    - "443:443"
+    - "443:443/udp"
+    volumes:
+    - /srv/caddy/data:/data/caddy
+    - /srv/caddy/config:/config/caddy
+    env_file:
+    - caddy/.env
+    healthcheck:
+      test: curl --fail http://localhost/healthcheck || exit 1
+    restart: unless-stopped
+
+  node_exporter:
+    container_name: node_exporter
+    image: quay.io/prometheus/node-exporter:latest
+    command:
+    - "--path.rootfs=/host"
+    pid: host
+    ports:
+    - "0.0.0.0:9100:9100"
+    volumes:
+    - /:/host:ro,rslave
+    healthcheck:
+      test: wget --spider http://localhost:9100 || exit 1
+    restart: unless-stopped
+
+  cadvisor:
+    container_name: cadvisor
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+    - "0.0.0.0:9200:8080"
+    volumes:
+    - /:/rootfs:ro
+    - /var/run:/var/run:ro
+    - /sys:/sys:ro
+    - /var/lib/docker/:/var/lib/docker:ro
+    - /dev/disk/:/dev/disk:ro
+    privileged: true
+    restart: unless-stopped

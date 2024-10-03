@@ -1,0 +1,41 @@
+{
+  log
+  admin off
+}
+
+(browse_with_auth) {
+  basic_auth {
+    {env.AUTH_USER} {env.AUTH_PASSWORD}
+    {env.AUTH_USER2} {env.AUTH_PASSWORD2}
+  }
+    root * {args[0]}
+    file_server browse
+}
+
+:80 {
+  respond / "Hmm, are your sure you're meant to be here?" 404
+
+  respond /healthcheck "Everything is fine." 200
+
+  handle_path /movies* {
+    import browse_with_auth /media/radarr
+  }
+
+  handle_path /🎬* {
+    import browse_with_auth /media/radarr
+  }
+
+  handle_path /tv* {
+    import browse_with_auth /media/sonarr
+  }
+
+  handle_path /📺* {
+    import browse_with_auth /media/sonarr
+  }
+
+  respond "401 Unauthorized" 401
+
+  handle_errors {
+    respond "{err.status_code} {err.status_text}"
+  }
+}

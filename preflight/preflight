@@ -1,0 +1,84 @@
+#!/bin/bash
+
+MAX_ATTEMPTS="${MAX_ATTEMPTS-3}"
+INTERVAL="${INTERVAL-"3s"}"
+
+source ./logging
+
+# Validate environment variables
+ISSUES=()
+if [[ -z "${ALLOWED_IP}" && -z "${DISALLOWED_IP}" ]]
+then
+  ISSUES+=("DISALLOWED_IP")
+  ISSUES+=("ALLOWED_IP")
+fi
+if [[ -z "${MOUNTPOINT}" ]]
+then
+  ISSUES+=("MOUNTPOINT")
+fi
+if [[ "${#ISSUES[@]}" -gt 0 ]]
+then
+  log-error "Missing environment variables: ${ISSUES[*]}"
+  log-critical "Unable to continue"
+  exit 1
+fi
+
+check-mount () {
+  if [[ ! -d "${MOUNTPOINT}" ]]
+  then
+    log-warning "${MOUNTPOINT} is not a directory"
+    return 1
+  fi
+  FILE_COUNT=$(ls -1A "${MOUNTPOINT}" | wc -l)
+  if [[ "${FILE_COUNT}" -gt 0 ]]
+  then
+    log-debug "${MOUNTPOINT} contains ${FILE_COUNT} files or directories"
+    return 0
+  else
+    log-warning "${MOUNTPOINT} appears to be empty"
+    log-warning "Ensure the directory has permissions for user: $(id)"
+    log-warning "and add at least one file with: touch ${MOUNTPOINT}/.not-empty"
+    return 1
+  fi
+}
+
+check-ip () {
+  IP=$(curl --fail --silent --show-error https://ipinfo.io/ip)
+  if [[ -n "${DISALLOWED_IP}" ]]
+  then
+    if [[ "${IP}" == "${DISALLOWED_IP}" ]]
+    then
+      log-warning "External IP is ${IP} which is disallowed"
+      return 1
+    fi
+  fi
+  if [[ -n "${ALLOWED_IP}" ]]
+  then
+    if [[ "${IP}" != "${ALLOWED_IP}" ]]
+    then
+      log-warning "External IP is ${IP}. Expected: ${ALLOWED_IP}"
+      return 1
+    fi
+  fi
+  log-debug "External IP is ${IP}"
+  return 0
+}
+
+for ((ATTEMPT=1; ATTEMPT <= MAX_ATTEMPTS; ATTEMPT++))
+do
+  if check-mount && check-ip
+  then
+    log-success "All checks passed"
+    exit 0
+  fi
+
+  if [[ "${ATTEMPT}" -eq "${MAX_ATTEMPTS}" ]]
+  then
+    break
+  fi
+  log-information "Retrying in ${INTERVAL}. Attempt ${ATTEMPT} of ${MAX_ATTEMPTS}"
+  sleep "${INTERVAL}"
+done
+
+log-error "Max number of attempts reached"
+exit 1
