@@ -164,31 +164,3 @@ services:
     healthcheck:
       test: curl --fail http://localhost/healthcheck || exit 1
     restart: unless-stopped
-
-  node_exporter:
-    container_name: node_exporter
-    image: quay.io/prometheus/node-exporter:latest
-    command:
-    - "--path.rootfs=/host"
-    pid: host
-    ports:
-    - "0.0.0.0:9100:9100"
-    volumes:
-    - /:/host:ro,rslave
-    healthcheck:
-      test: wget --spider http://localhost:9100 || exit 1
-    restart: unless-stopped
-
-  cadvisor:
-    container_name: cadvisor
-    image: gcr.io/cadvisor/cadvisor:latest
-    ports:
-    - "0.0.0.0:9200:8080"
-    volumes:
-    - /:/rootfs:ro
-    - /var/run:/var/run:ro
-    - /sys:/sys:ro
-    - /var/lib/docker/:/var/lib/docker:ro
-    - /dev/disk/:/dev/disk:ro
-    privileged: true
-    restart: unless-stopped
