@@ -1,88 +1,83 @@
-# Use a custom domain and HTTPS/TLS with Caddy
+# Steaming TV shows, movies and music with Plex and Jellyfin
 
-This is part 3 of the series: [how to setup Plex, Sonarr, Radarr, etc](https://github.com/RogueOneEcho/how-to-setup-plex-sonarr-radarr).
+This is part 2 of the series: [how to setup Plex, Sonarr, Radarr, etc](https://github.com/RogueOneEcho/how-to-setup-plex-sonarr-radarr).
 
-This part adds Caddy to the stack making the services accessible via a custom domain with HTTPS/TLS encryption.
-
-> [!NOTE]
-> It is assumed you are using Cloudflare for DNS. If not then refer to the Caddy documentation for your provider:*
-> - [How to use DNS provider modules in Caddy 2](https://caddy.community/t/how-to-use-dns-provider-modules-in-caddy-2/8148)
-> - [Automatic HTTPS](https://caddyserver.com/docs/automatic-https)
-> - [HTTPS quick-start](https://caddyserver.com/docs/quick-starts/https)
-> - [acme_dns reference](https://caddyserver.com/docs/caddyfile/options#acme-dns)
+This part adds streaming using the Plex and Jellyfin media servers.
 
 ## Technologies
-- [Caddy](https://caddyserver.com/) as a reverse proxy.
-- [Cloudflare](https://www.cloudflare.com/) for DNS validation.
+- [Plex](https://www.plex.tv/) media server.
+- [Jellyfin](https://jellyfin.org/) an open-source alternative to Plex
 
 ## How it works
 
-### Caddy
+### Plex
 
-The `caddy` service runs [Caddy](https://caddyserver.com) which:
-- makes the services accessible via a custom domain such as `plex.example.com`
-- automatically obtains and renews HTTPS/TLS certificates from Let's Encrypt using [Cloudflare DNS validation](https://github.com/caddy-dns/cloudflare).
+The `plex` service runs [Plex](https://www.plex.tv/) for streaming your personal collection of movies, TV and music.
+
+### Jellyfin
+
+The `jellyfin` service runs [Jellyfin](https://jellyfin.org/) for streaming your personal collection of movies, TV and music. It's an open-source alternative to Plex.
+
+> [!NOTE]
+> As Jellyfin and Plex serve the same purposes the `jellyfin` service is defined as a separate [profile](https://docs.docker.com/compose/how-tos/profiles/) in the `docker-compose.yml` file and won't start up by default. Unless specifically called with:
+>
+> ```bash
+> docker compose --profile jellyfin up -d
+> ```
 
 ## Getting started
 
-### 1. Create DNS records
+### 1. Start Plex
 
-Add `A` records for the subdomains you intend to use pointing to your server's IP address:
-- `plex.example.com`
-- `jellyfin.example.com`
-- `sonarr.example.com`
-- `radarr.example.com`
-- `lidarr.example.com`
-- `readarr.example.com`
-- `listenarr.example.com`
-- `watch.example.com`
-
-> [!WARNING]
-> Be aware that this is publicly exposing your IP address.
->
-> For extra security there are a few options, but these are outside the scope of this guide:
->
-> - use Cloudflare to hide your server's IP address by enabling the Cloudflare proxy.
-> - [create a personal VPN](https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04) on your server and bind Docker to only use the local VPN IP address. That way your services are connectable whenever you're connected to your personal VPN.
-
-### 2. Obtain a Cloudflare API token
-
-[By following these steps](https://github.com/caddy-dns/cloudflare/blob/master/README.md#configuration)
-
-### 3. Set the Caddy environment variables
-
-Copy the `caddy/.env.example` file to `caddy/.env` and set:
-
-- `CLOUDFLARE_API_TOKEN` to your Cloudflare API token
-- `LETSENCRYPT_EMAIL` to your email address
-- `PLEX_HOST` to the domain you want to use for Plex
-- `JELLYFIN_HOST` to the domain you want to use for Jellyfin
-- `SONARR_HOST` to the domain you want to use for Sonarr
-- `RADARR_HOST` to the domain you want to use for Radarr
-- `LIDARR_HOST` to the domain you want to use for Lidarr
-- `READARR_HOST` to the domain you want to use for Readarr
-- `LISTENARR_HOST` to the domain you want to use for Listenarr
-- `WATCH_HOST` to the domain you want to use for Watch
-
-### 4. Start the services
-
-Start the services with:
+Start the `plex` service with:
 
 ```bash
-docker compose up -d
+docker compose up -d --wait plex
 ```
 
-Follow the `caddy` logs to ensure Caddy is able to complete the DNS challenge for a Let's Encrypt certificate:
+Follow the logs to ensure Plex is running smoothly:
 
 ```bash
-docker compose logs -f caddy
+docker compose logs -f plex
 ```
 
-Caddy doesn't use plain text logging so if you find that to confusing try this snippet to make the JSON readable:
+Plex should now be accessible at `https://localhost:32400`.
+
+### 2. Start Jellyfin (optional)
+
+To start Jellyfin via its profile:
 
 ```bash
-docker logs caddy 2>&1 | jq --color-output | less -R
+docker compose up --profile jellyfin -d --wait jellyfin
 ```
+
+If you'd rather not have Jellyfin defined as a separate profile then in `docker-compose.yml` remove the `profiles` section so it starts with the other services.
+
+```yaml
+    profiles:
+    - jellyfin
+```
+
+Follow the logs to ensure Jellyfin is running smoothly:
+
+```bash
+docker compose logs -f jellyfin
+```
+
+Plex should now be accessible at `https://localhost:8096`.
+
+### 3. Set up libraries
+
+Regardless of whether you're using Plex or Jellyfin you'll need to set up libraries through there respective web interfaces:
+
+- TV Shows are managed by Sonarr so set the library path to `/srv/shared/sonarr`
+- Movies are managed by Radarr so set the library path to `/srv/shared/radarr`
+- Music is managed by Lidarr so set the library path to `/srv/shared/lidarr`
+- Audiobooks are managed by Listenarr so set the library path to `/srv/shared/listenarr`
+
+## Next steps
+
+-  Part 3 [Use a custom domain and HTTPS/TLS with Caddy](https://github.com/RogueOneEcho/how-to-setup-plex-sonarr-radarr/tree/part-3)
 
 ## Troubleshooting
 
