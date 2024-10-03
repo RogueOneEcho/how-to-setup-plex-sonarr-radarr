@@ -11,41 +11,6 @@ services:
     env_file:
     - preflight/.env
 
-  plex:
-    container_name: plex
-    image: lscr.io/linuxserver/plex
-    ports:
-    - "0.0.0.0:32400:32400"
-    volumes:
-    - /srv/plex:/config
-    - /srv/shared:/srv/shared
-    env_file:
-    - shared/.env
-    - plex/.env
-    depends_on:
-      preflight:
-        condition: service_completed_successfully
-    healthcheck:
-      test: curl -s -o /dev/null -w '%{http_code}' http://localhost:32400 | grep -q 401
-    restart: unless-stopped
-
-  jellyfin:
-    container_name: jellyfin
-    image: lscr.io/linuxserver/jellyfin
-    profiles:
-    - jellyfin
-    ports:
-    - "0.0.0.0:8096:8096"
-    volumes:
-    - /srv/jellyfin:/config
-    - /srv/shared:/srv/shared
-    env_file:
-    - shared/.env
-    depends_on:
-      preflight:
-        condition: service_completed_successfully
-    restart: unless-stopped
-
   sonarr:
     container_name: sonarr
     image: lscr.io/linuxserver/sonarr
@@ -134,7 +99,7 @@ services:
   watch:
     container_name: watch
     build: watch
-    user: "1000:1001"
+    user: "${USER_ID}:${GROUP_ID}"
     ports:
     - "0.0.0.0:11180:80"
     volumes:
