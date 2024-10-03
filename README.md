@@ -4,7 +4,7 @@ To keep things clear this guide is split into multiple parts with each building 
 
 - Part 1 [Automated downloads with Sonarr, Radarr, Lidarr and Readarr](https://github.com/RogueOneEcho/how-to-setup-plex-sonarr-radarr/tree/part-1)
 
-- Part 2 [Steaming TV shows, movies and music with Plex and Jellyfin](https://github.com/RogueOneEcho/how-to-setup-plex-sonarr-radarr/tree/part-1)
+- Part 2 [Steaming TV shows, movies and music with Plex and Jellyfin](https://github.com/RogueOneEcho/how-to-setup-plex-sonarr-radarr/tree/part-2)
 
 - Part 3 [Use a custom domain and HTTPS/TLS with Caddy](https://github.com/RogueOneEcho/how-to-setup-plex-sonarr-radarr/tree/part-3)
 
