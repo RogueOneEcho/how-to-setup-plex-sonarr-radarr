@@ -19,7 +19,6 @@ services:
     volumes:
     - /srv/plex:/config
     - /srv/shared:/srv/shared
-    - /media:/media
     env_file:
     - shared/.env
     - plex/.env
@@ -40,7 +39,6 @@ services:
     volumes:
     - /srv/jellyfin:/config
     - /srv/shared:/srv/shared
-    - /media:/media
     env_file:
     - shared/.env
     depends_on:
@@ -54,7 +52,6 @@ services:
     volumes:
     - /srv/sonarr:/config
     - /srv/shared:/srv/shared
-    - /media:/media
     env_file:
     - shared/.env
     depends_on:
@@ -70,7 +67,6 @@ services:
     volumes:
     - /srv/radarr:/config
     - /srv/shared:/srv/shared
-    - /media:/media
     env_file:
     - shared/.env
     depends_on:
@@ -86,7 +82,6 @@ services:
     volumes:
     - /srv/lidarr:/config
     - /srv/shared:/srv/shared
-    - /media:/media
     env_file:
     - shared/.env
     depends_on:
@@ -102,7 +97,6 @@ services:
     volumes:
     - /srv/readarr:/config
     - /srv/shared:/srv/shared
-    - /media:/media
     env_file:
     - shared/.env
     depends_on:
@@ -118,7 +112,6 @@ services:
     volumes:
     - /srv/listenarr:/config
     - /srv/shared:/srv/shared
-    - /media:/media
     env_file:
     - shared/.env
     depends_on:
