@@ -49,6 +49,8 @@ services:
   sonarr:
     container_name: sonarr
     image: lscr.io/linuxserver/sonarr
+    ports:
+    - "0.0.0.0:8989:8989"
     volumes:
     - /srv/sonarr:/config
     - /srv/shared:/srv/shared
@@ -64,6 +66,8 @@ services:
   radarr:
     container_name: radarr
     image: lscr.io/linuxserver/radarr
+    ports:
+    - "0.0.0.0:7878:7878"
     volumes:
     - /srv/radarr:/config
     - /srv/shared:/srv/shared
@@ -79,6 +83,8 @@ services:
   lidarr:
     container_name: lidarr
     image: lscr.io/linuxserver/lidarr
+    ports:
+    - "0.0.0.0:8686:8686"
     volumes:
     - /srv/lidarr:/config
     - /srv/shared:/srv/shared
@@ -94,6 +100,8 @@ services:
   readarr:
     container_name: readarr
     image: lscr.io/linuxserver/readarr:develop
+    ports:
+    - "0.0.0.0:8787:8787"
     volumes:
     - /srv/readarr:/config
     - /srv/shared:/srv/shared
@@ -109,6 +117,8 @@ services:
   listenarr:
     container_name: listenarr
     image: lscr.io/linuxserver/readarr:develop
+    ports:
+    - "0.0.0.0:8484:8484"
     volumes:
     - /srv/listenarr:/config
     - /srv/shared:/srv/shared
@@ -137,23 +147,6 @@ services:
     depends_on:
       preflight:
         condition: service_completed_successfully
-    healthcheck:
-      test: curl --fail http://localhost/healthcheck || exit 1
-    restart: unless-stopped
-
-  caddy:
-    container_name: caddy
-    build: caddy
-    user: "1000:1001"
-    ports:
-    - "80:80"
-    - "443:443"
-    - "443:443/udp"
-    volumes:
-    - /srv/caddy/data:/data/caddy
-    - /srv/caddy/config:/config/caddy
-    env_file:
-    - caddy/.env
     healthcheck:
       test: curl --fail http://localhost/healthcheck || exit 1
     restart: unless-stopped
